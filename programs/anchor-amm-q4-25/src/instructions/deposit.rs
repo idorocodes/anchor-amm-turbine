@@ -72,7 +72,7 @@ impl<'info> Deposit<'info> {
         require!(self.config.locked == false, AmmError::PoolLocked);
         require!(amount != 0, AmmError::InvalidAmount);
 
-        let (x, y) = match self.mint_lp.supply == 0
+       let (x, y) = match self.mint_lp.supply == 0
             && self.vault_x.amount == 0
             && self.vault_y.amount == 0
         {
@@ -84,8 +84,7 @@ impl<'info> Deposit<'info> {
                     self.mint_lp.supply,
                     amount,
                     6,
-                )
-                .unwrap();
+                ).unwrap();
                 (amounts.x, amounts.y)
             }
         };
