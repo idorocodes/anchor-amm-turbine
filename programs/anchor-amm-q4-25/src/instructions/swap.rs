@@ -8,7 +8,7 @@ use constant_product_curve::{ConstantProduct, LiquidityPair};
 use crate::{errors::AmmError, state::Config};
 
 // #[derive(Accounts)]
-// pub struct Swap<'info> {
+// pub struct Swap<'info> { 
 // TODO: Write the accounts struct
 // }
 
