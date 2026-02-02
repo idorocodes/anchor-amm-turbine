@@ -42,13 +42,13 @@ pub struct Swap<'info> {
     #[account(
         mut,
         associated_token::mint = mint_x,
-        associated_token::authority = user,
+        associated_token::authority = swaper,
     )]
     pub swapper_x: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint_y,
-        associated_token::authority = user,
+        associated_token::authority = swaper,
     )]
     pub swapper_y: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
@@ -60,14 +60,6 @@ impl<'info> Swap<'info> {
     pub fn swap(&mut self, is_x: bool, amount: u64, min: u64) -> Result<()> {
         require!(self.config.locked == false, AmmError::PoolLocked);
         require!(amount != 0, AmmError::InvalidAmount);
-        require!(
-            self.swapper_x.key() == self.vault_x.key(),
-            AmmError::InvalidToken
-        );
-        require!(
-            self.swapper_y.key() == self.vault_y.key(),
-            AmmError::InvalidToken
-        );
 
         let pair = match is_x {
             true => LiquidityPair::X,
