@@ -11,52 +11,52 @@ use crate::{errors::AmmError, state::Config};
 pub struct Withdraw<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    pub mint_x: Account<'info, Mint>,
-    pub mint_y: Account<'info, Mint>,
+    pub mint_x: Box<Account<'info, Mint>>,
+    pub mint_y: Box<Account<'info, Mint>>,
     #[account(
         has_one = mint_x,
         has_one = mint_y,
         seeds = [b"config", config.seed.to_le_bytes().as_ref()],
         bump = config.config_bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
     #[account(
         mut,
         seeds = [b"lp", config.key().as_ref()],
         bump = config.lp_bump,
     )]
-    pub mint_lp: Account<'info, Mint>,
+    pub mint_lp: Box<Account<'info, Mint>>,
     #[account(
         mut,
         associated_token::mint = mint_x,
         associated_token::authority = config,
     )]
-    pub vault_x: Account<'info, TokenAccount>,
+    pub vault_x: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = mint_y,
         associated_token::authority = config,
     )]
-    pub vault_y: Account<'info, TokenAccount>,
+    pub vault_y: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = mint_x,
         associated_token::authority = user,
     )]
-    pub user_x: Account<'info, TokenAccount>,
+    pub user_x: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = mint_y,
         associated_token::authority = user,
     )]
-    pub user_y: Account<'info, TokenAccount>,
+    pub user_y: Box<Account<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         payer = user,
         associated_token::mint = mint_lp,
         associated_token::authority = user,
     )]
-    pub user_lp: Account<'info, TokenAccount>,
+    pub user_lp: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -107,10 +107,10 @@ impl<'info> Withdraw<'info> {
             to,
             authority: self.config.to_account_info(),
         };
-
+        let config_key =  self.config.seed.to_le_bytes();
         let signer_seeds: &[&[&[u8]]] = &[&[
             b"config",
-            &self.config.seed.to_le_bytes(),
+            &config_key.as_ref(),
             &[self.config.config_bump],
         ]];
         let ctx = CpiContext::new_with_signer(cpi_programs, cpi_accounts, signer_seeds);
@@ -126,13 +126,12 @@ impl<'info> Withdraw<'info> {
         let cpi_accounts = Burn {
             mint: self.mint_lp.to_account_info(),
             from: self.user_lp.to_account_info(),
-            authority: self.config.to_account_info(),
+            authority: self.user.to_account_info(),
         };
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            b"config",
-            &self.config.seed.to_le_bytes(),
-            &[self.config.config_bump],
-        ]];
+
+        let config_key = self.config.key();
+        let signer_seeds: &[&[&[u8]]] =
+            &[&[b"lp", &config_key.as_ref(), &[self.config.lp_bump]]];
         let ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         burn(ctx, amount)
